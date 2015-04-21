@@ -11,7 +11,10 @@
  * \date March 12, 2015
  */
 
-#include <graspdb/GraspModel.h>
+// graspdb
+#include "graspdb/GraspModel.h"
+
+// ROS
 #include <ros/ros.h>
 
 using namespace std;
@@ -57,12 +60,29 @@ const vector<Grasp> &GraspModel::getGrasps() const
   return grasps_;
 }
 
+vector<Grasp> &GraspModel::getGrasps()
+{
+  return grasps_;
+}
+
 size_t GraspModel::getNumGrasps() const
 {
   return grasps_.size();
 }
 
 const Grasp &GraspModel::getGrasp(const size_t index) const
+{
+  // check the index value first
+  if (index < grasps_.size())
+  {
+    return grasps_[index];
+  } else
+  {
+    throw std::out_of_range("GraspModel::getGrasp : Grasp index does not exist.");
+  }
+}
+
+Grasp &GraspModel::getGrasp(const size_t index)
 {
   // check the index value first
   if (index < grasps_.size())
@@ -99,6 +119,18 @@ void GraspModel::removeGrasp(const size_t index)
 }
 
 const Grasp &GraspModel::getBestGrasp() const
+{
+  // check the index value first
+  if (grasps_.size() > 0)
+  {
+    return grasps_[this->getBestGraspIndex()];
+  } else
+  {
+    throw std::out_of_range("GraspModel::getBestGrasp : Grasp list is empty.");
+  }
+}
+
+Grasp &GraspModel::getBestGrasp()
 {
   // check the index value first
   if (grasps_.size() > 0)
@@ -158,8 +190,19 @@ double GraspModel::getBestSuccessRate() const
   }
 }
 
-
 const Grasp &GraspModel::getWorstGrasp() const
+{
+  // check the index value first
+  if (grasps_.size() > 0)
+  {
+    return grasps_[this->getWorstGraspIndex()];
+  } else
+  {
+    throw std::out_of_range("GraspModel::getWorstGrasp : Grasp list is empty.");
+  }
+}
+
+Grasp &GraspModel::getWorstGrasp()
 {
   // check the index value first
   if (grasps_.size() > 0)
@@ -220,6 +263,11 @@ double GraspModel::getWorstSuccessRate() const
 }
 
 const sensor_msgs::PointCloud2 &GraspModel::getPointCloud() const
+{
+  return point_cloud_;
+}
+
+sensor_msgs::PointCloud2 &GraspModel::getPointCloud()
 {
   return point_cloud_;
 }

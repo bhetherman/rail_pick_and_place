@@ -13,6 +13,10 @@
 #ifndef RAIL_PICK_AND_PLACE_GRASPDB_POSE_H_
 #define RAIL_PICK_AND_PLACE_GRASPDB_POSE_H_
 
+// graspdb
+#include "Orientation.h"
+#include "Position.h"
+
 // ROS
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -20,13 +24,10 @@
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/Transform.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <tf2/LinearMath/Transform.h>
 
 // C++ Standard Library
 #include <string>
-
-// graspdb
-#include "Orientation.h"
-#include "Position.h"
 
 namespace rail
 {
@@ -120,6 +121,16 @@ public:
   Pose(const geometry_msgs::TransformStamped &tf);
 
   /*!
+   * \brief Create a new Pose.
+   *
+   * Creates a new Pose with the given frame identifier and positional data from the given ROS tf2 Transform.
+   *
+   * \param robot_fixed_frame_id The reference frame identifier.
+   * \param position The ROS tf2 Transform to extract position and orientation data from.
+   */
+  Pose(const std::string &robot_fixed_frame_id, const tf2::Transform &tf);
+
+  /*!
    * \brief Frame ID value mutator.
    *
    * Set the frame ID value of this Pose.
@@ -156,6 +167,15 @@ public:
   const Position &getPosition() const;
 
   /*!
+   * \brief Position value accessor (immutable).
+   *
+   * Get the position value of this Pose.
+   *
+   * \return The position value.
+   */
+  Position &getPosition();
+
+  /*!
    * \brief Orientation value mutator.
    *
    * Set the orientation value of this Pose.
@@ -165,13 +185,22 @@ public:
   void setOrientation(const Orientation &orientation);
 
   /*!
-   * \brief Orientation value accessor.
+   * \brief Orientation value accessor (immutable).
    *
    * Get the orientation value of this Pose.
    *
    * \return The orientation value.
    */
   const Orientation &getOrientation() const;
+
+  /*!
+   * \brief Orientation value accessor.
+   *
+   * Get the orientation value of this Pose.
+   *
+   * \return The orientation value.
+   */
+  Orientation &getOrientation();
 
   /*!
    * Converts this Pose object into a ROS Pose message.
@@ -193,6 +222,13 @@ public:
    * \return The ROS Transform message with this positional data.
    */
   geometry_msgs::Transform toROSTransformMessage() const;
+
+  /*!
+   * Converts this Pose object into a ROS tf2 Transform.
+   *
+   * \return The ROS tf2 Transform with this positional data.
+   */
+  tf2::Transform toTF2Transform() const;
 
 private:
   /*! Frame identifier. */

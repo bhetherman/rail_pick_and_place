@@ -1,15 +1,30 @@
-#include <rail_recognition/ObjectRecognitionListener.h>
+/*!
+ * \file ObjectRecognitionListener.cpp
+ * \brief The object recognition listener node object.
+ *
+ * The object recognition listener will listen to a specified SegmentedObjectsArray topic and attempt to recognize
+ * all segmented objects. The new list are republished on a separate topic.
+ *
+ * \author Russell Toris, WPI - rctoris@wpi.edu
+ * \author David Kent, WPI - rctoris@wpi.edu
+ * \date April 8, 2015
+ */
+
+// RAIL Recognition
+#include "rail_recognition/ObjectRecognitionListener.h"
+#include "rail_recognition/PointCloudRecognizer.h"
+
+// ROS
+#include <geometry_msgs/PoseArray.h>
 
 using namespace std;
-using namespace pcl;
 using namespace rail::pick_and_place;
 
-ObjectRecognitionListener::ObjectRecognitionListener() :
-    asRecognize(n, "rail_recognition/recognize", boost::bind(&ObjectRecognitionListener::executeRecognize, this, _1), false),
-    asRecognizeAll(n, "rail_recognition/recognize_all", boost::bind(&ObjectRecognitionListener::executeRecognizeAll, this, _1), false)
+ObjectRecognitionListener::ObjectRecognitionListener() : private_node_("~")
 {
-  //setup connection to grasp database
   // set defaults
+  debug_ = DEFAULT_DEBUG;
+  string segmented_objects_topic("/segmentation/segmented_objects");
   int port = graspdb::Client::DEFAULT_PORT;
   string host("127.0.0.1");
   string user("ros");
@@ -17,219 +32,129 @@ ObjectRecognitionListener::ObjectRecognitionListener() :
   string db("graspdb");
 
   // grab any parameters we need
-  n.getParam("/graspdb/host", host);
-  n.getParam("/graspdb/port", port);
-  n.getParam("/graspdb/user", user);
-  n.getParam("/graspdb/password", password);
-  n.getParam("/graspdb/db", db);
+  private_node_.getParam("debug", debug_);
+  private_node_.getParam("segmented_objects_topic", segmented_objects_topic);
+  node_.getParam("/graspdb/host", host);
+  node_.getParam("/graspdb/port", port);
+  node_.getParam("/graspdb/user", user);
+  node_.getParam("/graspdb/password", password);
+  node_.getParam("/graspdb/db", db);
 
   // connect to the grasp database
-  graspdb = new graspdb::Client(host, port, user, password, db);
-  bool okay = graspdb->connect();
+  graspdb_ = new graspdb::Client(host, port, user, password, db);
+  okay_ = graspdb_->connect();
 
-  if (okay)
-    ROS_INFO("Successfully connected to grasp database.");
-  else
-    ROS_INFO("Could not connect to grasp database.");
+  // setup a debug publisher if we need it
+  if (debug_)
+  {
+    debug_pub_ = private_node_.advertise<geometry_msgs::PoseArray>("debug", 1, true);
+  }
 
-  ros::NodeHandle pnh("~");
-  string objectTopic("/rail_segmentation/segmented_objects");
-  pnh.getParam("object_topic", objectTopic);
-  segmentedObjectsSubscriber = n.subscribe(objectTopic, 1, &ObjectRecognitionListener::objectsCallback, this);
-  recognizedObjectsPublisher = n.advertise<rail_manipulation_msgs::SegmentedObjectList>("rail_recognition/recognized_objects", 1);
+  segmented_objects_sub_ = node_.subscribe(segmented_objects_topic, 1,
+      &ObjectRecognitionListener::segmentedObjectsCallback, this);
+  recognized_objects_pub_ = private_node_.advertise<rail_manipulation_msgs::SegmentedObjectList>(
+      "recognized_objects", 1);
 
-  xTrans = 0.0;
-  yTrans = 0.0;
-  zTrans = 0.0;
-
-  asRecognize.start();
-  asRecognizeAll.start();
+  if (okay_)
+  {
+    ROS_INFO("Object Recognition Listener Successfully Initialized");
+  }
 }
 
-void ObjectRecognitionListener::objectsCallback(const rail_manipulation_msgs::SegmentedObjectList& msg)
+ObjectRecognitionListener::~ObjectRecognitionListener()
 {
-  ROS_INFO("Received new segmented objects.");
+  // cleanup
+  graspdb_->disconnect();
+  delete graspdb_;
+}
 
-  boost::recursive_mutex::scoped_lock lock(api_mutex);
-  rail_manipulation_msgs::SegmentedObjectList newObjectList;
-  newObjectList.header = msg.header;
-  newObjectList.objects.resize(msg.objects.size());
-  for (unsigned int i = 0; i < newObjectList.objects.size(); i ++)
+bool ObjectRecognitionListener::okay() const
+{
+  return okay_;
+}
+
+void ObjectRecognitionListener::segmentedObjectsCallback(
+    const rail_manipulation_msgs::SegmentedObjectList::ConstPtr &objects)
+{
+  ROS_INFO("Received %li segmented objects.", objects->objects.size());
+
+  // check against the old list to prevent throwing out data
+  vector<rail_manipulation_msgs::SegmentedObject> new_list;
+  for (size_t i = 0; i < objects->objects.size(); i++)
   {
-    newObjectList.objects[i] = msg.objects[i];
-    for (unsigned int j = 0; j < objectList.objects.size(); j ++)
+    bool matched = false;
+    // search for a match on the point cloud
+    for (size_t j = 0; j < object_list_.objects.size(); j++)
     {
-      //fill in recognition information if the point cloud matches an already recognized point cloud
-      if (!objectList.objects[j].recognized)
-        continue;
-
-      if (comparePointClouds(newObjectList.objects[i].point_cloud, objectList.objects[j].point_cloud))
+      // only do a compare if we previously recognized the object
+      if (object_list_.objects[j].recognized &&
+          this->comparePointClouds(objects->objects[i].point_cloud, object_list_.objects[j].point_cloud))
       {
-        ROS_INFO("Found a match");
-        newObjectList.objects[i].grasps = objectList.objects[j].grasps;
-        newObjectList.objects[i].model_id = objectList.objects[j].model_id;
-        newObjectList.objects[i].name = objectList.objects[j].name;
-        newObjectList.objects[i].recognized = objectList.objects[j].recognized;
+        ROS_INFO("Found a match from previously recognized objects.");
+        matched = true;
+        new_list.push_back(object_list_.objects[j]);
         break;
       }
     }
+
+    // check if we didn't match
+    if (!matched)
+    {
+      new_list.push_back(objects->objects[i]);
+    }
   }
 
-  objectList = newObjectList;
-  recognizedObjectsPublisher.publish(objectList);
+  // store the list
+  object_list_.objects = new_list;
 
-  ROS_INFO("New segmented objects stored.");
-}
-
-bool ObjectRecognitionListener::comparePointClouds(const sensor_msgs::PointCloud2 &cloud1, const sensor_msgs::PointCloud2 &cloud2)
-{
-  if (cloud1.data.size() != cloud2.data.size())
-    return false;
-
-  for (unsigned int i = 0; i < cloud1.data.size(); i ++)
-  {
-    if (cloud1.data[i] != cloud2.data[i])
-      return false;
-  }
-
-  return true;
-}
-
-void ObjectRecognitionListener::executeRecognize(const rail_manipulation_msgs::RecognizeGoalConstPtr &goal)
-{
-  //populate candidates
+  // run recognition
+  ROS_INFO("Running recognition...");
+  // populate candidates
   vector<graspdb::GraspModel> candidates;
-  if (goal->name.size() > 0)
+  graspdb_->loadGraspModels(candidates);
+  // convert to PCL grasp models
+  vector<PCLGraspModel> pcl_candidates;
+  for (size_t i = 0; i < candidates.size(); i++)
   {
-    graspdb->loadGraspModelsByObjectName(goal->name, candidates);
+    pcl_candidates.push_back(PCLGraspModel(candidates[i]));
   }
-  else
+
+  // go through the current list
+  PointCloudRecognizer recognizer;
+  for (size_t i = 0; i < object_list_.objects.size(); i++)
   {
-    vector<string> names;
-    graspdb->getUniqueGraspModelObjectNames(names);
-    for (unsigned int i = 0; i < names.size(); i ++)
+    // check if it is already recognized
+    rail_manipulation_msgs::SegmentedObject &object = object_list_.objects[i];
+    if (!object.recognized)
     {
-      vector<graspdb::GraspModel> tempCandidates;
-      graspdb->loadGraspModelsByObjectName(names[i], tempCandidates);
-      candidates.insert(candidates.end(), tempCandidates.begin(), tempCandidates.end());
+      // perform recognition
+      recognizer.recognizeObject(object, pcl_candidates);
     }
   }
 
-  rail_manipulation_msgs::RecognizeResult result;
+  // republish the new list
+  recognized_objects_pub_.publish(object_list_);
+  // check for debug publishing
+  if (debug_)
   {
-    boost::recursive_mutex::scoped_lock lock(api_mutex);
-    //perform recognition
-    if (goal->index < objectList.objects.size())
+    geometry_msgs::PoseArray poses;
+    for (size_t i = 0; i < object_list_.objects.size(); i++)
     {
-      result.success = recognizer.recognizeObject(&objectList.objects[goal->index], candidates);
+      for (size_t j = 0; j < object_list_.objects[i].grasps.size(); j++)
+      {
+        poses.header = object_list_.objects[i].grasps[j].header;
+        poses.poses.push_back(object_list_.objects[i].grasps[j].pose);
+      }
     }
-    if (result.success)
-    {
-      recognizedObjectsPublisher.publish(objectList);
-      ROS_INFO("Object successfully recognized: %s", objectList.objects[goal->index].name.c_str());
-    }
-    else
-    {
-      ROS_INFO("Object could not be recognized.");
-    }
+    debug_pub_.publish(poses);
   }
 
-  asRecognize.setSucceeded(result);
+  ROS_INFO("New recognized objects published.");
 }
 
-void ObjectRecognitionListener::executeRecognizeAll(const rail_manipulation_msgs::RecognizeAllGoalConstPtr &goal)
+bool ObjectRecognitionListener::comparePointClouds(const sensor_msgs::PointCloud2 &pc1,
+    const sensor_msgs::PointCloud2 &pc2) const
 {
-  rail_manipulation_msgs::RecognizeAllFeedback feedback;
-  stringstream ss;
-  ss << "Populating candidates for recognition...";
-  feedback.message == ss.str();
-  asRecognizeAll.publishFeedback(feedback);
-
-  //populate candidates
-  vector<graspdb::GraspModel> candidates;
-  vector<string> names;
-  graspdb->getUniqueGraspModelObjectNames(names);
-  for (unsigned int i = 0; i < names.size(); i ++)
-  {
-    vector<graspdb::GraspModel> tempCandidates;
-    graspdb->loadGraspModelsByObjectName(names[i], tempCandidates);
-    candidates.insert(candidates.end(), tempCandidates.begin(), tempCandidates.end());
-  }
-
-  rail_manipulation_msgs::RecognizeAllResult result;
-  {
-    boost::recursive_mutex::scoped_lock lock(api_mutex);
-
-    ss.str("");
-    ss << "Beginning recognition for " << objectList.objects.size() << " objects...";
-    feedback.message == ss.str();
-    asRecognizeAll.publishFeedback(feedback);
-    result.successes.resize(objectList.objects.size());
-
-    bool recognizedSomething = false;
-    for (unsigned int i = 0; i < objectList.objects.size(); i++)
-    {
-      if (objectList.objects[i].recognized)
-      {
-        result.successes[i] = true;
-        ss.str("");
-        ss << "Object " << i << " already recognized as " << objectList.objects[i].name << ", " << objectList.objects.size() - i - 1 << " objects left to recgonize...";
-        feedback.message == ss.str();
-        asRecognizeAll.publishFeedback(feedback);
-        continue;
-      }
-
-      //perform recognition
-      result.successes[i] = recognizer.recognizeObject(&objectList.objects[i], candidates);
-      if (result.successes[i])
-      {
-        recognizedObjectsPublisher.publish(objectList);
-
-        if (!recognizedSomething)
-          recognizedSomething = true;
-
-        ss.str("");
-        ss << "Successfully recognized object " << i << " as " << objectList.objects[i].name << ", " << objectList.objects.size() - i - 1 << " objects left to recgonize...";
-        feedback.message == ss.str();
-        asRecognizeAll.publishFeedback(feedback);
-      }
-      else
-      {
-        ss.str("");
-        ss << "Could not recognize object " << i << ", " << objectList.objects.size() - i - 1 << " objects left to recgonize...";
-        feedback.message == ss.str();
-        asRecognizeAll.publishFeedback(feedback);
-      }
-    }
-
-    if (recognizedSomething)
-    {
-      ss.str("");
-      ss << "Successfully recognized at least one object.";
-      feedback.message == ss.str();
-      asRecognizeAll.publishFeedback(feedback);
-
-      recognizedObjectsPublisher.publish(objectList);
-    }
-    else
-    {
-      ss.str("");
-      ss << "Failed to recognize any objects.";
-      feedback.message == ss.str();
-      asRecognizeAll.publishFeedback(feedback);
-    }
-  }
-
-  asRecognizeAll.setSucceeded(result);
-}
-
-int main(int argc, char **argv)
-{
-  ros::init(argc, argv, "object_recognition_listener");
-
-  ObjectRecognitionListener orl;
-
-  ros::spin();
-
-  return 0;
+  // check the size first then compare
+  return (pc1.data.size() == pc2.data.size()) && (pc1.data == pc1.data);
 }

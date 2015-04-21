@@ -2,6 +2,80 @@
 Changelog for package rail_recognition
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.1.3 (2015-04-14)
+------------------
+* uses PCL models for generation
+* cleanup of new stuff
+* Recognition first performs a color check
+* Recognition tuning
+* added avg functions for color
+* removed metric pre-compute
+* stores metrics
+* Contributors: David Kent, Russell Toris
+
+Forthcoming
+-----------
+* changelog updated
+* uses PCL models for generation
+* cleanup of new stuff
+* Recognition first performs a color check
+* Recognition tuning
+* added avg functions for color
+* removed metric pre-compute
+* stores metrics
+* Contributors: David Kent, Russell Toris
+
+1.1.2 (2015-04-10)
+------------------
+* removed the swap check from recognition
+* Merge branch 'develop' of github.com:WPI-RAIL/rail_pick_and_place into develop
+* New decision tree for object models
+* docs finished
+* more docs
+* new metric trainier
+* Metric trainer filters point clouds first
+* bug removed
+* metric trainer addition
+* Added metric data collection for decision tree training
+* random selection added
+* fixes segfaults in graph search
+* graph search used
+* Contributors: David Kent, Russell Toris
+
+1.1.1 (2015-04-06)
+------------------
+
+1.1.0 (2015-04-03)
+------------------
+* new launch files
+* grasp model retriever added
+* general cleanup
+* refactor of model generator
+* major refactor of model generation
+* adds vector for search
+* more refactoring
+* begin refactor of metrics
+* Contributors: Russell Toris
+
+1.0.4 (2015-03-31)
+------------------
+* orientation added
+* Contributors: Russell Toris
+
+1.0.3 (2015-03-31)
+------------------
+* debug is now latched
+* checks for empty point cloud
+* starting to cleanup model generator
+* fix in launch
+* refactor of point cloud recognizer
+* added select all to database
+* repub of recognized objects addedg
+* Contributors: Russell Toris
+
+1.0.2 (2015-03-30)
+------------------
+
 1.0.1 (2015-03-27)
 ------------------
 * Removed some old code

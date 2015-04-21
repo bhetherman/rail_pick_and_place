@@ -1,74 +1,82 @@
-#ifndef PC_RECOGNITION_H_
-#define PC_RECOGNITION_H_
+/*!
+ * \file ObjectRecognizer.h
+ * \brief The object recognizer node object.
+ *
+ * The object recognizer sets up an action server that allows the recognition of a single segmented object.
+ *
+ * \author David Kent, WPI - rctoris@wpi.edu
+ * \author Russell Toris, WPI - rctoris@wpi.edu
+ * \date April 8, 2015
+ */
 
-//ROS
-#include <ros/ros.h>
+#ifndef RAIL_PICK_AND_PLACE_OBJECT_RECOGNIZER_H_
+#define RAIL_PICK_AND_PLACE_OBJECT_RECOGNIZER_H_
+
+// ROS
 #include <actionlib/server/simple_action_server.h>
 #include <graspdb/graspdb.h>
-#include <rail_recognition/Model.h>
-#include <rail_recognition/PCRecognizer.h>
 #include <rail_manipulation_msgs/RecognizeObjectAction.h>
-#include <sensor_msgs/point_cloud_conversion.h>
-#include <sensor_msgs/PointCloud.h>
-#include <tf/transform_broadcaster.h>
-#include <tf/transform_listener.h>
-
-//C++
-#include <boost/thread/thread.hpp>
-#include <stdlib.h>
-
-//PCL
-#include <pcl/io/pcd_io.h>
-#include <pcl/kdtree/kdtree_flann.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl/registration/icp.h>
-#include <pcl_conversions/pcl_conversions.h>
-
-//Point Cloud Filtering Constants
-#define RADIUS .01
-#define NUM_NEIGHBORS 23
-#define DST_THRESHOLD .00075
-
-//Recognition Constants
-#define ALPHA .5
+#include <ros/ros.h>
 
 namespace rail
 {
 namespace pick_and_place
 {
 
+/*!
+ * \class ObjectRecognizer
+ * \brief The object recognizer node object.
+ *
+ * The object recognizer sets up an action server that allows the recognition of a single segmented object.
+ */
 class ObjectRecognizer
 {
 public:
-
-/**
-  * Constructor
-  */
+  /*!
+   * \brief Creates a new ObjectRecognizer.
+   *
+   * Creates a new ObjectRecognizer with the associated action server.
+   */
   ObjectRecognizer();
 
+  /*!
+   * \brief Cleans up a ObjectRecognizer.
+   *
+   * Cleans up any connections used by the ObjectRecognizer.
+   */
+  virtual ~ObjectRecognizer();
+
+  /*!
+   * \brief A check for a valid ObjectRecognizer.
+   *
+   * This function will return true if the appropriate connections were created successfully during initialization.
+   *
+   * \return True if the appropriate connections were created successfully during initialization.
+   */
+  bool okay() const;
+
 private:
-  //ROS publishers, subscribers, and action servers
-  ros::NodeHandle n;
+  /*!
+   * \brief The recognize object action server callback.
+   *
+   * Attempts to recognize the object given in the goal and return it in the result.
+   *
+   * \param goal The goal specifying the segmented object to recognize.
+   */
+  void recognizeObjectCallback(const rail_manipulation_msgs::RecognizeObjectGoalConstPtr &goal);
 
-  actionlib::SimpleActionServer<rail_manipulation_msgs::RecognizeObjectAction> asRecognizeObject;
+  /*! The okay check flag. */
+  bool okay_;
+  /*! The grasp database connection. */
+  graspdb::Client *graspdb_;
 
-  graspdb::Client *graspdb;
-
-  PCRecognizer recognizer;
-
-  float xTrans;
-  float yTrans;
-  float zTrans;
-
-  //tf
-  tf::TransformListener tfListener;
-  tf::TransformBroadcaster tfBroadcaster;
-
-  void executeRecognizeObject(const rail_manipulation_msgs::RecognizeObjectGoalConstPtr &goal);
+  /*! The public and private ROS node handles. */
+  ros::NodeHandle node_, private_node_;
+  /*! The main recognition action server. */
+  actionlib::SimpleActionServer<rail_manipulation_msgs::RecognizeObjectAction> as_;
 };
 
-} //end namespace pick_and_place
-} //end namespace rail
+}
+}
 
 #endif

@@ -9,7 +9,8 @@
  * \date March 3, 2015
  */
 
-#include <graspdb/Orientation.h>
+// graspdb
+#include "graspdb/Orientation.h"
 
 using namespace std;
 using namespace rail::pick_and_place::graspdb;
@@ -30,6 +31,15 @@ Orientation::Orientation(const geometry_msgs::Quaternion &quaternion)
   y_ = quaternion.y;
   z_ = quaternion.z;
   w_ = quaternion.w;
+}
+
+Orientation::Orientation(const tf2::Quaternion &quaternion)
+{
+  // copy position data
+  x_ = quaternion.getX();
+  y_ = quaternion.getY();
+  z_ = quaternion.getZ();
+  w_ = quaternion.getW();
 }
 
 void Orientation::setX(const double x)
@@ -82,3 +92,15 @@ geometry_msgs::Quaternion Orientation::toROSQuaternionMessage() const
   return q;
 }
 
+tf2::Quaternion Orientation::toTF2Quaternion() const
+{
+  tf2::Quaternion q(x_, y_, z_, w_);
+  return q;
+}
+
+tf2::Matrix3x3 Orientation::toTF2Matrix3x3() const
+{
+  tf2::Quaternion q = this->toTF2Quaternion();
+  tf2::Matrix3x3 m(q);
+  return m;
+}

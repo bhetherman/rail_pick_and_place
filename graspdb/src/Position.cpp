@@ -9,7 +9,8 @@
  * \date March 3, 2015
  */
 
-#include <graspdb/Position.h>
+// graspdb
+#include "graspdb/Position.h"
 
 using namespace std;
 using namespace rail::pick_and_place::graspdb;
@@ -36,6 +37,14 @@ Position::Position(const geometry_msgs::Vector3 &v)
   x_ = v.x;
   y_ = v.y;
   z_ = v.z;
+}
+
+Position::Position(const tf2::Vector3 &v)
+{
+  // copy position data
+  x_ = v.getX();
+  y_ = v.getY();
+  z_ = v.getZ();
 }
 
 void Position::setX(const double x)
@@ -83,6 +92,12 @@ geometry_msgs::Vector3 Position::toROSVector3Message() const
   v.x = x_;
   v.y = y_;
   v.z = z_;
+  return v;
+}
+
+tf2::Vector3 Position::toTF2Vector3() const
+{
+  tf2::Vector3 v(x_, y_, z_);
   return v;
 }
 

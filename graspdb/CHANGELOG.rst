@@ -2,6 +2,54 @@
 Changelog for package graspdb
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.1.3 (2015-04-14)
+------------------
+* removed metric pre-compute
+* stores metrics
+* added segmented images to the database
+* Contributors: Russell Toris
+
+Forthcoming
+-----------
+* changelog updated
+* removed metric pre-compute
+* stores metrics
+* added segmented images to the database
+* Contributors: Russell Toris
+
+1.1.2 (2015-04-10)
+------------------
+* changed to upper case checking for names
+* changed to lower case checking for names
+* Contributors: Russell Toris
+
+1.1.1 (2015-04-06)
+------------------
+
+1.1.0 (2015-04-03)
+------------------
+* general cleanup
+* header cleanup
+* major refactor of model generation
+* mutable accessors added
+* added TF2 data types
+* Contributors: Russell Toris
+
+1.0.4 (2015-03-31)
+------------------
+
+1.0.3 (2015-03-31)
+------------------
+* correct dev added
+* added select all to database
+* repub of recognized objects addedg
+* Contributors: Russell Toris
+
+1.0.2 (2015-03-30)
+------------------
+* fixed typo in include install directory
+* Contributors: Russell Toris
+
 1.0.1 (2015-03-27)
 ------------------
 

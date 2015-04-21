@@ -1,7 +1,24 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(rail_pick_and_place_tools)
 
-find_package(catkin REQUIRED COMPONENTS roscpp actionlib graspdb rail_pick_and_place_msgs rail_manipulation_msgs rail_recognition rail_segmentation rviz sensor_msgs std_srvs)
+## Find catkin macros and libraries
+## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
+## is used, also find other catkin packages
+find_package(catkin REQUIRED COMPONENTS
+  actionlib
+  graspdb
+  rail_pick_and_place_msgs
+  rviz
+  roscpp
+  std_srvs
+)
+find_package(Boost REQUIRED COMPONENTS thread)
+
+## This plugin includes Qt widgets, so we must include Qt
+find_package(Qt4 REQUIRED COMPONENTS
+  QtCore
+  QtGui
+)
 
 ###################################################
 ## Declare things to be passed to other projects ##
@@ -17,66 +34,83 @@ catkin_package()
 ###########
 
 ## Specify additional locations of header files
-include_directories(include ${catkin_INCLUDE_DIRS})
-link_directories(${catkin_LIBRARY_DIRS})
-
-## This plugin includes Qt widgets, so we must include Qt like so:
-find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)
-include(${QT_USE_FILE})
-
-## I prefer the Qt signals and slots to avoid defining "emit", "slots",
-## etc because they can conflict with boost signals, so define QT_NO_KEYWORDS here.
-add_definitions(-DQT_NO_KEYWORDS)
-
-## Here we specify which header files need to be run through "moc",
-## Qt's meta-object compiler.
-qt4_wrap_cpp(MOC_FILES
-  include/rail_pick_and_place_tools/GraspCollectionPanel.h
-  include/rail_pick_and_place_tools/ModelGenerationPanel.h
-  include/rail_pick_and_place_tools/VisionPanel.h
+include_directories(include
+  ${boost_INCLUDE_DIRS}
+  ${catkin_INCLUDE_DIRS}
 )
 
-## Here we specify the list of source files, including the output of
-## the previous command which is stored in ``${MOC_FILES}``.
+## Include for use with Qt
+include(${QT_USE_FILE})
+
+## For use with Qt signals and slots
+add_definitions(-DQT_NO_KEYWORDS)
+
+## Specify which header files need to be run through "moc" (Qt's meta-object compiler).
+qt4_wrap_cpp(MOC_FILES
+  include/rail_pick_and_place_tools/GraspCollectionPanel.h
+  include/rail_pick_and_place_tools/MetricTrainingPanel.h
+  include/rail_pick_and_place_tools/ModelGenerationPanel.h
+  include/rail_pick_and_place_tools/SegmentPanel.h
+)
+
+## Specify plugin source files
 set(SOURCE_FILES
   src/GraspCollectionPanel.cpp
+  src/MetricTrainingPanel.cpp
   src/ModelGenerationPanel.cpp
-  src/VisionPanel.cpp
+  src/SegmentPanel.cpp
   ${MOC_FILES}
 )
 
+## Declare a cpp library
 add_library(${PROJECT_NAME} ${SOURCE_FILES})
 
-target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES} ${catkin_LIBRARIES})
+## Add message build dependencies (needed for source build)
+add_dependencies(${PROJECT_NAME}
+  rail_pick_and_place_msgs_generate_msgs_cpp
+)
 
-add_dependencies(${PROJECT_NAME} rail_recognition_generate_messages_cpp rail_pick_and_place_msgs_generate_msgs_cpp)
+## Specify libraries to link a library or executable target against
+target_link_libraries(${PROJECT_NAME}
+  ${boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  ${QT_LIBRARIES}
+)
 
 #############
 ## Install ##
 #############
+
 ## Mark executables and/or libraries for installation
 install(TARGETS ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 ## Copy header files
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.hpp" PATTERN "*.h"
+  FILES_MATCHING PATTERN "*.h"
 )
 
 ## Copy launch files
 install(DIRECTORY launch/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
+  FILES_MATCHING PATTERN "*.launch"
 )
 
 ## Copy rviz files
 install(DIRECTORY rviz/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/rviz
+  FILES_MATCHING PATTERN "*.rviz"
 )
 
-install(FILES
-  plugin_description.xml
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+## Copy splash screen files
+install(DIRECTORY images/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/images
+  FILES_MATCHING PATTERN "*.png"
+)
+
+## Copy plugin config files
+install(FILES plugin_description.xml
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)

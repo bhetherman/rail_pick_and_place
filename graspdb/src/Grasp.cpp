@@ -11,7 +11,8 @@
  * \date March 11, 2015
  */
 
-#include <graspdb/Grasp.h>
+// graspdb
+#include "graspdb/Grasp.h"
 
 using namespace std;
 using namespace rail::pick_and_place::graspdb;
@@ -55,6 +56,11 @@ void Grasp::setGraspModelID(const uint32_t grasp_model_id)
 }
 
 const Pose &Grasp::getGraspPose() const
+{
+  return grasp_pose_;
+}
+
+Pose &Grasp::getGraspPose()
 {
   return grasp_pose_;
 }

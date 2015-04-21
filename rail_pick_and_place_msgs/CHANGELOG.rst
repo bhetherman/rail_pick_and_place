@@ -2,6 +2,49 @@
 Changelog for package rail_pick_and_place_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.1.3 (2015-04-14)
+------------------
+* removed metric pre-compute
+* stores metrics
+* added segmented images to the database
+* Contributors: Russell Toris
+
+Forthcoming
+-----------
+* changelog updated
+* removed metric pre-compute
+* stores metrics
+* added segmented images to the database
+* Contributors: Russell Toris
+
+1.1.2 (2015-04-10)
+------------------
+* new metric trainier
+* metric trainer addition
+* Added metric data collection for decision tree training
+* Contributors: David Kent, Russell Toris
+
+1.1.1 (2015-04-06)
+------------------
+
+1.1.0 (2015-04-03)
+------------------
+* grasp model retriever added
+* general cleanup
+* major refactor of model generation
+* Contributors: Russell Toris
+
+1.0.4 (2015-03-31)
+------------------
+
+1.0.3 (2015-03-31)
+------------------
+* starting to cleanup model generator
+* Contributors: Russell Toris
+
+1.0.2 (2015-03-30)
+------------------
+
 1.0.1 (2015-03-27)
 ------------------
 

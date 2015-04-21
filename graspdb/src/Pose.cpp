@@ -10,7 +10,8 @@
  * \date March 11, 2015
  */
 
-#include <graspdb/Pose.h>
+// graspdb
+#include "graspdb/Pose.h"
 
 using namespace std;
 using namespace rail::pick_and_place::graspdb;
@@ -52,6 +53,11 @@ Pose::Pose(const geometry_msgs::TransformStamped &tf)
 {
 }
 
+Pose::Pose(const std::string &robot_fixed_frame_id, const tf2::Transform &tf)
+    : robot_fixed_frame_id_(robot_fixed_frame_id), position_(tf.getOrigin()), orientation_(tf.getRotation())
+{
+}
+
 void Pose::setRobotFixedFrameID(const string &robot_fixed_frame_id)
 {
   robot_fixed_frame_id_ = robot_fixed_frame_id;
@@ -72,12 +78,22 @@ const Position &Pose::getPosition() const
   return position_;
 }
 
+Position &Pose::getPosition()
+{
+  return position_;
+}
+
 void Pose::setOrientation(const Orientation &orientation)
 {
   orientation_ = orientation;
 }
 
 const Orientation &Pose::getOrientation() const
+{
+  return orientation_;
+}
+
+Orientation &Pose::getOrientation()
 {
   return orientation_;
 }
@@ -99,10 +115,10 @@ geometry_msgs::PoseStamped Pose::toROSPoseStampedMessage() const
   return pose;
 }
 
-geometry_msgs::Transform Pose::toROSTransformMessage() const
+tf2::Transform Pose::toTF2Transform() const
 {
-  geometry_msgs::Transform tf;
-  tf.translation = position_.toROSVector3Message();
-  tf.rotation = orientation_.toROSQuaternionMessage();
+  tf2::Quaternion orientation = orientation_.toTF2Quaternion();
+  tf2::Vector3 translation = position_.toTF2Vector3();
+  tf2::Transform tf(orientation, translation);
   return tf;
 }

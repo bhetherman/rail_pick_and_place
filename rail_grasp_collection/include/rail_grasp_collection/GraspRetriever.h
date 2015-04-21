@@ -15,11 +15,9 @@
 
 // ROS
 #include <actionlib/server/simple_action_server.h>
+#include <graspdb/graspdb.h>
 #include <rail_pick_and_place_msgs/RetrieveGraspDemonstrationAction.h>
 #include <ros/ros.h>
-
-// graspdb
-#include <graspdb/graspdb.h>
 
 namespace rail
 {
@@ -71,7 +69,7 @@ private:
 
   /*! The okay check flag. */
   bool okay_;
-  /* The grasp database connection. */
+  /*! The grasp database connection. */
   graspdb::Client *graspdb_;
 
   /*! The public and private ROS node handles. */

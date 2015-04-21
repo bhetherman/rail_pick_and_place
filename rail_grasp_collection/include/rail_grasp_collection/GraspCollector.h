@@ -17,6 +17,7 @@
 #include <actionlib/client/simple_action_client.h>
 #include <actionlib/server/simple_action_server.h>
 #include <geometry_msgs/Point32.h>
+#include <graspdb/graspdb.h>
 #include <rail_manipulation_msgs/GripperAction.h>
 #include <rail_manipulation_msgs/LiftAction.h>
 #include <rail_manipulation_msgs/SegmentedObjectList.h>
@@ -25,9 +26,6 @@
 #include <ros/ros.h>
 #include <sensor_msgs/point_cloud_conversion.h>
 #include <tf2_ros/transform_listener.h>
-
-// graspdb
-#include <graspdb/graspdb.h>
 
 // Boost
 #include <boost/thread/mutex.hpp>
@@ -94,7 +92,7 @@ private:
    *
    * \param object_list The object list returned from the segmented objects topic.
    */
-  void segmentedObjectsCallback(const rail_manipulation_msgs::SegmentedObjectList &object_list);
+  void segmentedObjectsCallback(const rail_manipulation_msgs::SegmentedObjectList::Ptr &object_list);
 
   /*! Mutex for locking on the segmented object list. */
   boost::mutex mutex_;
@@ -103,7 +101,7 @@ private:
   bool debug_, okay_;
   /*! Frame IDs to use. */
   std::string robot_fixed_frame_id_, eef_frame_id_;
-  /* The grasp database connection. */
+  /*! The grasp database connection. */
   graspdb::Client *graspdb_;
 
   /*! The public and private ROS node handles. */
@@ -113,7 +111,7 @@ private:
   /*! The listener for the segmented objects. */
   ros::Subscriber segmented_objects_sub_;
   /*! The most recent segmented objects. */
-  rail_manipulation_msgs::SegmentedObjectList object_list_;
+  rail_manipulation_msgs::SegmentedObjectList::Ptr object_list_;
   /*! The main grasp collection action server. */
   actionlib::SimpleActionServer<rail_pick_and_place_msgs::GraspAndStoreAction> as_;
   /*! The gripper action client. */

@@ -11,6 +11,10 @@
 #ifndef RAIL_PICK_AND_PLACE_GRASPDB_CLIENT_H_
 #define RAIL_PICK_AND_PLACE_GRASPDB_CLIENT_H_
 
+// graspdb
+#include "GraspDemonstration.h"
+#include "GraspModel.h"
+
 // ROS
 #include <sensor_msgs/PointCloud2.h>
 
@@ -19,11 +23,6 @@
 
 // C++ Standard Library
 #include <string>
-
-// graspdb
-#include "GraspDemonstration.h"
-#include "GraspModel.h"
-
 
 namespace rail
 {
@@ -65,7 +64,7 @@ public:
    * \param db The database name.
    */
   Client(const std::string &host, const uint16_t port, const std::string &user, const std::string &password,
-      const std::string &db);
+         const std::string &db);
 
   /*!
    * \brief Cleans up a Client.
@@ -154,6 +153,16 @@ public:
   bool loadGraspDemonstration(uint32_t id, GraspDemonstration &gd) const;
 
   /*!
+   * \brief Load all grasp demonstrations from the database.
+   *
+   * Load all grasp demonstrations data from the database with and store them in the given  vector.
+   *
+   * \param gds The vector to fill with GraspDemonstration objects with the loaded data.
+   * \return bool Returns true if a successful load was completed and the data was set correctly.
+   */
+  bool loadGraspDemonstrations(std::vector<GraspDemonstration> &gds) const;
+
+  /*!
    * \brief Load grasp demonstrations from the database from an object name.
    *
    * Load the grasp demonstrations data from the database with the given object names and store them in the given
@@ -198,6 +207,16 @@ public:
    * \return bool Returns true if a successful load was completed and the data was set correctly.
    */
   bool loadGraspModel(uint32_t id, GraspModel &gm) const;
+
+  /*!
+   * \brief Load all grasp models from the database.
+   *
+   * Load all grasp models data from the database and store them in the given vector.
+   *
+   * \param gms The vector to fill with GraspModel objects with the loaded data.
+   * \return bool Returns true if a successful load was completed and the data was set correctly.
+   */
+  bool loadGraspModels(std::vector<GraspModel> &gms) const;
 
   /*!
    * \brief Load grasp models from the database from an object name.
@@ -330,7 +349,7 @@ private:
    * \return bool Returns true if a successful load was completed and the data was set correctly.
    */
   bool getStringArrayFromPrepared(const std::string &prepared_name, const std::string &column_name,
-      std::vector<std::string> &strings) const;
+                                  std::vector<std::string> &strings) const;
 
   /*!
    * \brief Convert a Pose to a PostgreSQL object string.
@@ -372,6 +391,16 @@ private:
    * \return The PointCloud2 with values from the binary string.
    */
   sensor_msgs::PointCloud2 extractPointCloud2FromBinaryString(const pqxx::binarystring &bs) const;
+
+  /*!
+   * \brief Extract Image values from a binary string.
+   *
+   * Extracts Image values from the given PostgreSQL binary string and places them in a new ROS Image message.
+   *
+   * \param bs The binary string representation of the serialized Image.
+   * \return The Image with values from the binary string.
+   */
+  sensor_msgs::Image extractImageFromBinaryString(const pqxx::binarystring &bs) const;
 
   /*!
    * \brief Extract array values from a string array with vector creation.
@@ -435,6 +464,15 @@ private:
    * \param pc The ROS PointCloud2 message to convert to a PostgreSQL binary string.
    */
   pqxx::binarystring toBinaryString(const sensor_msgs::PointCloud2 &pc) const;
+
+  /*!
+   * \brief Convert a ROS Image to a PostgreSQL binary string.
+   *
+   * Converts the given ROS Image message to a PostgreSQL binary string for use in SQL queries.
+   *
+   * \param pc The ROS Image message to convert to a PostgreSQL binary string.
+   */
+  pqxx::binarystring toBinaryString(const sensor_msgs::Image &image) const;
 
 #endif
 

@@ -2,6 +2,45 @@
 Changelog for package rail_grasp_collection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.1.3 (2015-04-14)
+------------------
+* added segmented images to the database
+* Contributors: Russell Toris
+
+Forthcoming
+-----------
+* changelog updated
+* added segmented images to the database
+* Contributors: Russell Toris
+
+1.1.2 (2015-04-10)
+------------------
+* graph search used
+* Contributors: Russell Toris
+
+1.1.1 (2015-04-06)
+------------------
+
+1.1.0 (2015-04-03)
+------------------
+* new launch files
+* header cleanup
+* moved to ptr based storage
+* begin refactor of metrics
+* Contributors: Russell Toris
+
+1.0.4 (2015-03-31)
+------------------
+
+1.0.3 (2015-03-31)
+------------------
+* debug is now latched
+* starting to cleanup model generator
+* Contributors: Russell Toris
+
+1.0.2 (2015-03-30)
+------------------
+
 1.0.1 (2015-03-27)
 ------------------
 

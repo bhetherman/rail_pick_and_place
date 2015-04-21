@@ -14,15 +14,15 @@
 #ifndef RAIL_PICK_AND_PLACE_GRASPDB_GRASP_H_
 #define RAIL_PICK_AND_PLACE_GRASPDB_GRASP_H_
 
+// graspdb
+#include "Entity.h"
+#include "Pose.h"
+
 // ROS
 #include <rail_pick_and_place_msgs/GraspWithSuccessRate.h>
 
 // C++ Standard Library
 #include <string>
-
-// graspdb
-#include "Entity.h"
-#include "Pose.h"
 
 namespace rail
 {
@@ -105,13 +105,22 @@ public:
   void setGraspModelID(const uint32_t grasp_model_id);
 
   /*!
-   * \brief Grasp pose value accessor.
+   * \brief Grasp pose value accessor (immutable).
    *
    * Get the grasp pose value of this Grasp.
    *
    * \return The grasp pose value.
    */
   const Pose &getGraspPose() const;
+
+  /*!
+   * \brief Grasp pose value accessor.
+   *
+   * Get the grasp pose value of this Grasp.
+   *
+   * \return The grasp pose value.
+   */
+  Pose &getGraspPose();
 
   /*!
    * \brief Grasp pose value mutator.
